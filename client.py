@@ -107,30 +107,33 @@ class WeatherClient(object):
         """Documentation."""
         soup = BeautifulSoup(data, 'lxml').find("satellite")
         result = {}
-        result["image_url"] = soup.find("image_url").text
-        result["image_url_ir4"] = soup.find("image_url_ir4").text
-        result["image_url_vis"] = soup.find("image_url_vis").text
+        result["image_url"] = str(soup.find("image_url").text).\
+            replace('\'u', '')
+        result["image_url_ir4"] = str(soup.find("image_url_ir4").text).\
+            replace('\'u', '')
+        result["image_url_vis"] = str(soup.find("image_url_vis").text).\
+            replace('\'u', '')
         return result
 
     def parse_astronomy_data(self, data):
         """Documentation."""
         soup = BeautifulSoup(data, 'lxml').find("moon_phase")
-        print soup
         result = {}
-        result["percentilluminated"] = soup.find("percentilluminated").text
-        result["ageofmoon"] = soup.find("ageofmoon").text
+        result["percentilluminated"] = \
+            str(soup.find("percentilluminated").text) + "%"
+        result["ageofmoon"] = str(soup.find("ageofmoon").text) + " days" 
         result["sunset"] = str(soup.find("sunset").find("hour").text.\
             replace('\'u', '')) + ":" + str(soup.find("sunset").\
-            find("minute").text.replace('\'u', ''))
+            find("minute").text.replace('\'u', '')) + " h"
         result["sunrise"] = str(soup.find("sunrise").find("hour").text.\
             replace('\'u', '')) + ":" + str(soup.find("sunrise").\
-            find("minute").text.replace('\'u', ''))
+            find("minute").text.replace('\'u', '')) + " h"
         result["moonset"] = str(soup.find("moonset").find("hour").text.\
             replace('\'u', '')) + ":" + str(soup.find("moonset").\
-            find("minute").text.replace('\'u', ''))
+            find("minute").text.replace('\'u', '')) + " h"
         result["moonrise"] = str(soup.find("moonrise").find("hour").text.\
             replace('\'u', '')) + ":" + str(soup.find("moonrise").\
-            find("minute").text.replace('\'u', ''))
+            find("minute").text.replace('\'u', '')) + " h"
         return result
 
     def get_data(self, data):
@@ -145,8 +148,14 @@ class WeatherClient(object):
         """Documentation."""
         data = self.get_web_page(location)
         data = self.get_data(data)
-        # data = self.process_data(data)
         return data
+
+    def print_results(self, data):
+        """Documentation."""
+        for x in data:
+            print x
+            for y in data[x]:
+                print y, ':', data[x][y]
 
 
 if __name__ == "__main__":
@@ -154,7 +163,25 @@ if __name__ == "__main__":
         try:
             api_key = sys.argv[1]
             wc = WeatherClient(api_key)
-            result = wc.get_information(location)
-            print result
+            almanac, hourly, satellite, astronomy = \
+                wc.get_information(location)
+            print "------------------"
+            print "ALMANAC"
+            print "------------------"
+            wc.print_results(almanac)
+            print "------------------"
+            print "HOURLY"
+            print "------------------"
+            wc.print_results(hourly)
+            print "------------------"
+            print "SATELLITE"
+            print "------------------"
+            for x in satellite:
+                print x, ":", satellite[x]
+            print "------------------"
+            print "ASTRONOMY"
+            print "------------------"
+            for x in astronomy:
+                print x, ":", astronomy[x]
         except IndexError:
             print "Error, No API key"
