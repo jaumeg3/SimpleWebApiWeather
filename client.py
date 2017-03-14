@@ -24,7 +24,8 @@ class WeatherClient(object):
     url_base = "http://api.wunderground.com/api/"
     url_service = {
         "almanac": "/almanac/almanac/q/CA/",
-        "hourly": "/hourly/q/CA/"
+        "hourly": "/hourly/q/CA/",
+        "satellite": "/satellite/q/CA/"
         }
 
     def __init__(self, api_key):
@@ -42,10 +43,12 @@ class WeatherClient(object):
             temporal = f.read()
             data.append([x, temporal])
             f.close()
+        #print data
         return data
 
     def parse_almanac_data(self, data):
         """Documentation."""
+        print data
         soup = BeautifulSoup(data, 'lxml')
 
         result = {}
@@ -101,11 +104,27 @@ class WeatherClient(object):
                 break
         return result
 
+    def parse_satellite_data(self, data):
+        """Documentation."""
+        soup = BeautifulSoup(data, 'lxml').find("satellite")
+        result = {}
+        result["image_url"] = soup.find("image_url").text
+        result["image_url_ir4"] = soup.find("image_url_ir4").text
+        result["image_url_vis"] = soup.find("image_url_vis").text
+        return result
+
+    def parse_astronomy_data(self, data):
+        """Documentation."""
+        soup = BeautifulSoup(data, 'lxml').find("satellite")
+        result = {}
+
     def get_data(self, data):
         """Get the web-page, read and return the results."""
-        almanac = self.parse_almanac_data(data[1][1])
+        almanac = self.parse_almanac_data(data[2][1])
         hourly = self.parse_hourly_data(data[0][1])
-        return almanac, hourly
+        satellite = self.parse_satellite_data(data[1][1])
+        #astronomy = self.parse_astronomy_data(data[3][1])
+        return almanac, hourly, satellite#, astronomy
 
     def process_data(self, data):
         """Documentation."""
