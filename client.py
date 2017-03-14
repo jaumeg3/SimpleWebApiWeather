@@ -25,7 +25,8 @@ class WeatherClient(object):
     url_service = {
         "almanac": "/almanac/almanac/q/CA/",
         "hourly": "/hourly/q/CA/",
-        "satellite": "/satellite/q/CA/"
+        "satellite": "/satellite/q/CA/",
+        "astronomy": "/astronomy/q/Spain/"
         }
 
     def __init__(self, api_key):
@@ -43,12 +44,10 @@ class WeatherClient(object):
             temporal = f.read()
             data.append([x, temporal])
             f.close()
-        #print data
         return data
 
     def parse_almanac_data(self, data):
         """Documentation."""
-        print data
         soup = BeautifulSoup(data, 'lxml')
 
         result = {}
@@ -115,20 +114,32 @@ class WeatherClient(object):
 
     def parse_astronomy_data(self, data):
         """Documentation."""
-        soup = BeautifulSoup(data, 'lxml').find("satellite")
+        soup = BeautifulSoup(data, 'lxml').find("moon_phase")
+        print soup
         result = {}
+        result["percentilluminated"] = soup.find("percentilluminated").text
+        result["ageofmoon"] = soup.find("ageofmoon").text
+        result["sunset"] = str(soup.find("sunset").find("hour").text.\
+            replace('\'u', '')) + ":" + str(soup.find("sunset").\
+            find("minute").text.replace('\'u', ''))
+        result["sunrise"] = str(soup.find("sunrise").find("hour").text.\
+            replace('\'u', '')) + ":" + str(soup.find("sunrise").\
+            find("minute").text.replace('\'u', ''))
+        result["moonset"] = str(soup.find("moonset").find("hour").text.\
+            replace('\'u', '')) + ":" + str(soup.find("moonset").\
+            find("minute").text.replace('\'u', ''))
+        result["moonrise"] = str(soup.find("moonrise").find("hour").text.\
+            replace('\'u', '')) + ":" + str(soup.find("moonrise").\
+            find("minute").text.replace('\'u', ''))
+        return result
 
     def get_data(self, data):
         """Get the web-page, read and return the results."""
-        almanac = self.parse_almanac_data(data[2][1])
+        almanac = self.parse_almanac_data(data[3][1])
         hourly = self.parse_hourly_data(data[0][1])
         satellite = self.parse_satellite_data(data[1][1])
-        #astronomy = self.parse_astronomy_data(data[3][1])
-        return almanac, hourly, satellite#, astronomy
-
-    def process_data(self, data):
-        """Documentation."""
-        pass
+        astronomy = self.parse_astronomy_data(data[2][1])
+        return almanac, hourly, satellite, astronomy
 
     def get_information(self, location):
         """Documentation."""
